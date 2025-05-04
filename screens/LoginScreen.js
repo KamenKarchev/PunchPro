@@ -4,6 +4,7 @@ import { TextInput, Button, Text, Snackbar } from 'react-native-paper';
 import DataService from '../services/DataService';
 import { useUser } from '../contexts/UserContext';
 import SvgText from '../components/SvgText';
+import SquarePattern from '../components/SquarePattern';
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
@@ -45,14 +46,15 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <SquarePattern />
       <View style={styles.titleContainer}>
         <SvgText 
           text="Punch I/O"
-          x={100}
-          fontSize={80}
-          strokeWidth={0}
+          fontSize={65}
+          strokeWidth={10}
           strokeColor="#000000"
-          outerStrokeWidth={20}
+          outerStrokeWidth={4.5}
+          outerStrokeColor="#ffffff"
           fillColor="#b50448"
           style={styles.title}
         />
@@ -74,6 +76,8 @@ const LoginScreen = ({ navigation }) => {
               placeholder: '#ffffff',
             },
           }}
+          contentStyle={styles.inputContent}
+          placeholderTextColor="#ffffff"
         />
         <Button 
           mode="contained" 
@@ -91,10 +95,8 @@ const LoginScreen = ({ navigation }) => {
             <SvgText 
               text="Login"
               fontSize={33}
-              strokeWidth={4}
-              strokeColor="#000000"
-              innerStrokeWidth={2}
-              innerStrokeColor="#ffffff"
+              outerStrokeWidth={4.5}
+              outerStrokeColor="#ffffff"
               fillColor="#210554"
               style={styles.buttonText}
             />
@@ -134,8 +136,11 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: '#210554',
-    borderColor: '#b50448',
-    borderWidth: 2,
+    color: '#ffffff',
+  },
+  inputContent: {
+    color: '#ffffff',
+    fontSize: 18,
   },
   button: {
     marginTop: 20,

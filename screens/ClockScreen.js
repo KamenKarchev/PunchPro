@@ -4,6 +4,8 @@ import { FAB, Snackbar, Button, Portal, Dialog } from 'react-native-paper';
 import Svg, { Circle } from 'react-native-svg';
 import DataService from '../services/DataService';
 import { useUser } from '../contexts/UserContext';
+import SquarePattern from '../components/SquarePattern';
+import SvgText from '../components/SvgText';
 
 const ClockScreen = ({ navigation }) => {
   const [isClockedIn, setIsClockedIn] = useState(false);
@@ -75,6 +77,7 @@ const ClockScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <SquarePattern />
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.userButton}
@@ -88,19 +91,28 @@ const ClockScreen = ({ navigation }) => {
 
       <View style={styles.clockContainer}>
         <TouchableOpacity onPress={handleClockAction} disabled={loading}>
-          <Svg height="200" width="200">
-            <Circle
-              cx="100"
-              cy="100"
-              r="90"
-              fill={isClockedIn ? '#b50448' : '#5e3794'}
-              stroke="#b50448"
-              strokeWidth="4"
-            />
-          </Svg>
-          <Text style={styles.clockText}>
-            {isClockedIn ? 'CLOCK OUT' : 'CLOCK IN'}
-          </Text>
+          <View style={styles.clockButtonContainer}>
+            <Svg height="200" width="200">
+              <Circle
+                cx="100"
+                cy="100"
+                r="90"
+                fill={isClockedIn ? '#b50448' : '#210554'}
+                stroke="#b50448"
+                strokeWidth="4"
+              />
+            </Svg>
+            <View style={styles.clockTextContainer}>
+              <SvgText
+                text={isClockedIn ? 'CLOCK OUT' : 'CLOCK IN'}
+                fontSize={28}
+                strokeWidth={2}
+                strokeColor="#000000"
+                fillColor="#ffffff"
+                style={styles.clockText}
+              />
+            </View>
+          </View>
         </TouchableOpacity>
         {lastClockIn && (
           <View style={styles.lastClockContainer}>
@@ -146,6 +158,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#22272e',
+    paddingTop: 40,
   },
   header: {
     width: '100%',
@@ -188,17 +201,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  clockText: {
+  clockButtonContainer: {
+    position: 'relative',
+    width: 200,
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clockTextContainer: {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -50 }, { translateY: -10 }],
-    color: '#ffffff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    textShadowColor: '#000000',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clockText: {
+    textAlign: 'center',
   },
   lastClockContainer: {
     backgroundColor: '#210554',
@@ -218,10 +238,12 @@ const styles = StyleSheet.create({
   },
   analyticsFab: {
     position: 'absolute',
-    margin: 16,
-    right: 0,
-    top: 0,
+    margin: 0,
+    right: 20,
+    bottom: 20,
     backgroundColor: '#210554',
+    borderWidth: 2,
+    borderColor: '#b50448',
   },
 });
 

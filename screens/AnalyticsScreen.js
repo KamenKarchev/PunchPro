@@ -3,6 +3,8 @@ import { View, StyleSheet, ScrollView, RefreshControl, useWindowDimensions } fro
 import { Text, Card, Title, Paragraph, Snackbar, FAB, ActivityIndicator, Divider } from 'react-native-paper';
 import DataService from '../services/DataService';
 import { useUser } from '../contexts/UserContext';
+import SquarePattern from '../components/SquarePattern';
+import SvgText from '../components/SvgText';
 
 const AnalyticsScreen = ({ navigation }) => {
   const [weeklySummary, setWeeklySummary] = useState(null);
@@ -10,8 +12,12 @@ const AnalyticsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { currentUser } = useUser();
-  const { width, height } = useWindowDimensions();
-  const isWideScreen = width > 600;
+  const { width } = useWindowDimensions();
+  const isWideScreen = width > 768; // Desktop breakpoint
+
+  // Calculate the grid width based on screen size
+  const gridWidth = isWideScreen ? '60%' : '80%';
+  const shiftsWidth = isWideScreen ? '60%' : '80%';
 
   useEffect(() => {
     if (currentUser) {
@@ -61,10 +67,34 @@ const AnalyticsScreen = ({ navigation }) => {
     return ((new Date(record.clockOut) - new Date(record.clockIn)) / (1000 * 60 * 60)).toFixed(2);
   };
 
+  const calculateEarnings = (hours) => {
+    return (parseFloat(hours) * currentUser?.hourlyRate).toFixed(2);
+  };
+
+  const calculateAverages = (summary) => {
+    if (!summary || !summary.records || summary.records.length === 0) {
+      return { avgWeeklyHours: 0, avgDailyPay: 0 };
+    }
+
+    // Get unique weeks from the records
+    const weeks = new Set(summary.records.map(record => {
+      const date = new Date(record.date);
+      return `${date.getFullYear()}-${date.getWeek()}`;
+    }));
+
+    const avgWeeklyHours = (summary.totalHours / weeks.size).toFixed(1);
+
+    // Calculate average daily pay
+    const totalDays = summary.records.length;
+    const avgDailyPay = (summary.estimatedPay / totalDays).toFixed(2);
+
+    return { avgWeeklyHours, avgDailyPay };
+  };
+
   const renderBackgroundPattern = () => {
     const patternSize = 50;
     const rows = Math.ceil(width / patternSize);
-    const cols = Math.ceil(height / patternSize);
+    const cols = Math.ceil(width / patternSize);
     
     return (
       <View style={StyleSheet.absoluteFill}>
@@ -111,8 +141,11 @@ const AnalyticsScreen = ({ navigation }) => {
     );
   }
 
+  const { avgWeeklyHours, avgDailyPay } = calculateAverages(weeklySummary);
+
   return (
     <View style={styles.container}>
+      <SquarePattern />
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -120,10 +153,21 @@ const AnalyticsScreen = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <Card style={styles.summaryCard}>
+        <Card style={[styles.summaryCard, { width: gridWidth, alignSelf: 'center' }]}>
           <Card.Content>
             <View style={styles.titleContainer}>
-              {renderOutlinedText('Weekly Summary', styles.cardTitle)}
+              <SvgText
+                text="Weekly Summary"
+                fontSize={45}
+                strokeWidth={8}
+                strokeColor="#ffffff"
+                outerStrokeWidth={5}
+                outerStrokeColor="#000000"
+                fillColor="#b50448"
+                fontFamily="Roboto"
+                letterSpacing={4}
+                style={[styles.cardTitle, { alignSelf: 'center' }]}
+              />
             </View>
             <Divider style={styles.divider} />
             <View style={styles.summaryGrid}>
@@ -135,42 +179,70 @@ const AnalyticsScreen = ({ navigation }) => {
                 <Text style={styles.summaryLabel}>Hourly Rate</Text>
                 <Text style={styles.summaryValue}>${currentUser?.hourlyRate.toFixed(2)}</Text>
               </View>
-              <View style={[styles.summaryQuarter, styles.summaryQuarterBorderRight]}>
+              <View style={[styles.summaryQuarter, styles.summaryQuarterBorderRight, styles.summaryQuarterBorderBottom]}>
                 <Text style={styles.summaryLabel}>Estimated Pay</Text>
                 <Text style={styles.summaryValue}>${weeklySummary?.estimatedPay.toFixed(2)}</Text>
               </View>
-              <View style={styles.summaryQuarter}>
+              <View style={[styles.summaryQuarter, styles.summaryQuarterBorderBottom]}>
                 <Text style={styles.summaryLabel}>Shifts</Text>
                 <Text style={styles.summaryValue}>{weeklySummary?.records.length}</Text>
+              </View>
+              <View style={[styles.summaryQuarter, styles.summaryQuarterBorderRight]}>
+                <Text style={styles.summaryLabel}>Avg Weekly Hours</Text>
+                <Text style={styles.summaryValue}>{avgWeeklyHours}</Text>
+              </View>
+              <View style={styles.summaryQuarter}>
+                <Text style={styles.summaryLabel}>Avg Daily Pay</Text>
+                <Text style={styles.summaryValue}>${avgDailyPay}</Text>
               </View>
             </View>
           </Card.Content>
         </Card>
 
-        <View style={styles.titleContainer}>
-          {renderOutlinedText('Recent Shifts', styles.sectionTitle)}
+        <View style={[styles.shiftsContainer, { width: shiftsWidth }]}>
+          <View style={styles.titleContainer}>
+            <SvgText
+              text="Recent Shifts"
+              fontSize={45}
+              strokeWidth={8}
+              strokeColor="#ffffff"
+              outerStrokeWidth={5}
+              outerStrokeColor="#000000"
+              fillColor="#b50448"
+              fontFamily="Roboto"
+              letterSpacing={8}
+              style={[styles.sectionTitle, { alignSelf: 'center' }]}
+            />
+          </View>
+          {weeklySummary?.records.map((record, index) => {
+            const hours = calculateDailyHours(record);
+            const earnings = calculateEarnings(hours);
+            return (
+              <Card key={index} style={styles.recordCard}>
+                <Card.Content>
+                  <View style={styles.recordHeader}>
+                    <Text style={styles.recordDate}>{formatDate(record.date)}</Text>
+                    <View style={styles.recordStats}>
+                      <Text style={styles.recordHours}>{hours} hrs</Text>
+                      <Text style={styles.recordEarnings}>${earnings}</Text>
+                    </View>
+                  </View>
+                  <Divider style={styles.divider} />
+                  <View style={styles.recordDetails}>
+                    <View style={styles.timeBlock}>
+                      <Text style={styles.timeLabel}>Clock In</Text>
+                      <Text style={styles.timeValue}>{formatTime(record.clockIn)}</Text>
+                    </View>
+                    <View style={styles.timeBlock}>
+                      <Text style={styles.timeLabel}>Clock Out</Text>
+                      <Text style={styles.timeValue}>{formatTime(record.clockOut) || 'N/A'}</Text>
+                    </View>
+                  </View>
+                </Card.Content>
+              </Card>
+            );
+          })}
         </View>
-        {weeklySummary?.records.map((record, index) => (
-          <Card key={index} style={styles.recordCard}>
-            <Card.Content>
-              <View style={styles.recordHeader}>
-                <Text style={styles.recordDate}>{formatDate(record.date)}</Text>
-                <Text style={styles.recordHours}>{calculateDailyHours(record)} hrs</Text>
-              </View>
-              <Divider style={styles.divider} />
-              <View style={styles.recordDetails}>
-                <View style={styles.timeBlock}>
-                  <Text style={styles.timeLabel}>Clock In</Text>
-                  <Text style={styles.timeValue}>{formatTime(record.clockIn)}</Text>
-                </View>
-                <View style={styles.timeBlock}>
-                  <Text style={styles.timeLabel}>Clock Out</Text>
-                  <Text style={styles.timeValue}>{formatTime(record.clockOut) || 'N/A'}</Text>
-                </View>
-              </View>
-            </Card.Content>
-          </Card>
-        ))}
 
         <Snackbar
           visible={!!error}
@@ -191,6 +263,15 @@ const AnalyticsScreen = ({ navigation }) => {
   );
 };
 
+// Add helper method to get week number
+Date.prototype.getWeek = function() {
+  const d = new Date(Date.UTC(this.getFullYear(), this.getMonth(), this.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -208,6 +289,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 32,
+    paddingTop: 40,
   },
   summaryCard: {
     marginBottom: 16,
@@ -224,8 +306,8 @@ const styles = StyleSheet.create({
     borderColor: '#b50448',
   },
   titleContainer: {
-    position: 'relative',
     alignItems: 'center',
+    marginVertical: 16,
   },
   outlinedTextContainer: {
     position: 'relative',
@@ -255,13 +337,9 @@ const styles = StyleSheet.create({
     left: 3,
   },
   cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
     marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
     marginVertical: 16,
   },
   summaryGrid: {
@@ -313,7 +391,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#ffffff',
   },
+  recordStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
   recordHours: {
+    fontSize: 16,
+    color: '#b50448',
+    fontWeight: 'bold',
+    textShadowColor: '#000000',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 5,
+  },
+  recordEarnings: {
     fontSize: 16,
     color: '#b50448',
     fontWeight: 'bold',
@@ -345,12 +436,15 @@ const styles = StyleSheet.create({
   },
   backFab: {
     position: 'absolute',
-    margin: 16,
-    right: 0,
-    top: 0,
+    margin: 0,
+    right: 20,
+    bottom: 20,
     backgroundColor: '#210554',
     borderWidth: 2,
     borderColor: '#b50448',
+  },
+  shiftsContainer: {
+    alignSelf: 'center',
   },
 });
 
