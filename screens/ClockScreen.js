@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
-import { FAB, Snackbar, Button, Portal, Dialog } from 'react-native-paper';
+import { FAB, Snackbar, Button, Portal, Dialog, Menu } from 'react-native-paper';
 import Svg, { Circle } from 'react-native-svg';
 import DataService from '../services/DataService';
 import { useUser } from '../contexts/UserContext';
 import SquarePattern from '../components/SquarePattern';
 import SvgText from '../components/SvgText';
+import ChangePasswordDialog from '../components/ChangePasswordDialog';
+import SwitchAccountDialog from '../components/SwitchAccountDialog';
 
 const ClockScreen = ({ navigation }) => {
   const [isClockedIn, setIsClockedIn] = useState(false);
@@ -13,11 +15,17 @@ const ClockScreen = ({ navigation }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSwitchDialog, setShowSwitchDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const { currentUser, setCurrentUser } = useUser();
 
   useEffect(() => {
     if (currentUser) {
       loadClockState();
+    }
+    // Check if user needs to change password
+    if (currentUser && !currentUser.hasChangedPassword) {
+      setShowPasswordDialog(true);
     }
   }, [currentUser]);
 
@@ -69,24 +77,73 @@ const ClockScreen = ({ navigation }) => {
     setShowSwitchDialog(true);
   };
 
-  const confirmSwitchAccount = () => {
-    setShowSwitchDialog(false);
-    setCurrentUser(null);
-    navigation.replace('Login');
+  const confirmSwitchAccount = async () => {
+    try {
+      await DataService.logout();
+      setShowSwitchDialog(false);
+      setCurrentUser(null);
+      navigation.replace('Login');
+    } catch (error) {
+      console.error('Error switching accounts:', error);
+      setError('Failed to switch accounts');
+    }
+  };
+
+  const handlePasswordChange = async (newPassword) => {
+    try {
+      const updatedUser = await DataService.updateUserPassword(currentUser.id, newPassword);
+      setCurrentUser(updatedUser);
+      setShowPasswordDialog(false);
+    } catch (error) {
+      console.error('Error changing password:', error);
+    }
+  };
+
+  const handleMenuOpen = () => {
+    setMenuVisible(true);
+  };
+
+  const handleMenuClose = () => {
+    setMenuVisible(false);
+  };
+
+  const handleChangePassword = () => {
+    setMenuVisible(false);
+    setShowPasswordDialog(true);
   };
 
   return (
     <View style={styles.container}>
       <SquarePattern />
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.userButton}
-          onPress={handleSwitchAccount}
-          activeOpacity={0.7}
+        <Menu
+          visible={menuVisible}
+          onDismiss={handleMenuClose}
+          anchor={
+            <TouchableOpacity 
+              style={styles.userButton}
+              onPress={handleMenuOpen}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.userIcon}>👤</Text>
+              <Text style={styles.username} numberOfLines={1}>{currentUser?.username}</Text>
+            </TouchableOpacity>
+          }
+          contentStyle={styles.menuContent}
         >
-          <Text style={styles.userIcon}>👤</Text>
-          <Text style={styles.username} numberOfLines={1}>{currentUser?.username}</Text>
-        </TouchableOpacity>
+          <Menu.Item 
+            onPress={handleChangePassword} 
+            title="Change Password"
+            titleStyle={styles.menuItemText}
+            style={styles.menuItem}
+          />
+          <Menu.Item 
+            onPress={handleSwitchAccount} 
+            title="Switch Account"
+            titleStyle={styles.menuItemText}
+            style={styles.menuItem}
+          />
+        </Menu>
       </View>
 
       <View style={styles.clockContainer}>
@@ -130,18 +187,17 @@ const ClockScreen = ({ navigation }) => {
         color="#ffffff"
       />
 
-      <Portal>
-        <Dialog visible={showSwitchDialog} onDismiss={() => setShowSwitchDialog(false)}>
-          <Dialog.Title>Switch Account</Dialog.Title>
-          <Dialog.Content>
-            <Text>Are you sure you want to switch accounts?</Text>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setShowSwitchDialog(false)}>Cancel</Button>
-            <Button onPress={confirmSwitchAccount}>Switch</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+      <ChangePasswordDialog
+        visible={showPasswordDialog}
+        onDismiss={() => setShowPasswordDialog(false)}
+        onConfirm={handlePasswordChange}
+      />
+
+      <SwitchAccountDialog
+        visible={showSwitchDialog}
+        onDismiss={() => setShowSwitchDialog(false)}
+        onConfirm={confirmSwitchAccount}
+      />
 
       <Snackbar
         visible={!!error}
@@ -244,6 +300,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#210554',
     borderWidth: 2,
     borderColor: '#b50448',
+  },
+  menuContent: {
+    backgroundColor: '#210554',
+    borderWidth: 2,
+    borderColor: '#b50448',
+  },
+  menuItem: {
+    backgroundColor: '#210554',
+  },
+  menuItemText: {
+    color: '#ffffff',
+    fontSize: 16,
   },
 });
 

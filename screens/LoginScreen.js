@@ -8,37 +8,56 @@ import SquarePattern from '../components/SquarePattern';
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { setCurrentUser } = useUser();
 
-  const handleLogin = async () => {
+  const handleLoginOrRegister = async () => {
     try {
       setLoading(true);
       setError('');
       
-      if (!username.trim()) {
-        setError('Please enter a username');
+      if (!username.trim() || !password.trim()) {
+        setError('Please enter both username and password');
         return;
       }
 
-      // Check if user exists, if not create new user
+      // Check if user exists
       const users = await DataService.getUsers();
       let user = users.find(u => u.username === username);
       
       if (!user) {
-        // Create new user if doesn't exist
-        user = await DataService.createUser(username);
+        // If user doesn't exist and password matches username, register
+        if (password === username) {
+          user = await DataService.createUser(username, username);
+        } else {
+          setError('Invalid username or password');
+          return;
+        }
+      } else {
+        // User exists, check password
+        if (!user.hasChangedPassword) {
+          if (password !== username) {
+            setError('Initial password must be the same as username');
+            return;
+          }
+        } else if (password !== user.password) {
+          setError('Invalid password');
+          return;
+        }
       }
       
-      // Set current user in context
+      // Set current user in context and local storage
+      await DataService.setCurrentUser(user);
       setCurrentUser(user);
       
       // Navigate to Clock screen
       navigation.replace('Clock');
     } catch (error) {
       console.error(error);
-      setError('Failed to login');
+      setError('Failed to login or register');
     } finally {
       setLoading(false);
     }
@@ -78,10 +97,38 @@ const LoginScreen = ({ navigation }) => {
           }}
           contentStyle={styles.inputContent}
           placeholderTextColor="#ffffff"
+          placeholder="Username"
+        />
+        <TextInput
+          value={password}
+          onChangeText={setPassword}
+          style={[styles.input, styles.passwordInput]}
+          mode="outlined"
+          secureTextEntry={!showPassword}
+          outlineColor="#b50448"
+          activeOutlineColor="#b50448"
+          theme={{
+            colors: {
+              primary: '#b50448',
+              background: '#210554',
+              text: '#ffffff',
+              placeholder: '#ffffff',
+            },
+          }}
+          contentStyle={styles.inputContent}
+          placeholderTextColor="#ffffff"
+          placeholder="Password"
+          right={
+            <TextInput.Icon
+              icon={showPassword ? "eye-off" : "eye"}
+              onPress={() => setShowPassword(!showPassword)}
+              color="#ffffff"
+            />
+          }
         />
         <Button 
           mode="contained" 
-          onPress={handleLogin} 
+          onPress={handleLoginOrRegister} 
           style={styles.button}
           loading={loading}
           disabled={loading}
@@ -136,7 +183,13 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: '#210554',
+    borderColor: '#b50448',
+    borderWidth: 2,
+    fontSize: 18,
     color: '#ffffff',
+  },
+  passwordInput: {
+    marginTop: 15,
   },
   inputContent: {
     color: '#ffffff',
@@ -148,8 +201,8 @@ const styles = StyleSheet.create({
     borderWidth: 10,
     borderColor: '#b50448',
   },
-  buttonTextContainer: {
-    position: 'relative',
+  buttonText: {
+    textAlign: 'center',
   },
 });
 

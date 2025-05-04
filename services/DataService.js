@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class DataService {
   // User Management
-  static async createUser(username) {
+  static async createUser(username, password) {
     try {
       const users = await this.getUsers();
       if (users.some(user => user.username === username)) {
@@ -12,8 +12,12 @@ class DataService {
       const newUser = {
         id: Date.now().toString(),
         username,
+        password,
+        hasChangedPassword: false,
         hourlyRate: 15, // Default hourly rate
-        timeRecords: []
+        timeRecords: [],
+        clockIns: [],
+        clockOuts: [],
       };
       
       users.push(newUser);
@@ -27,11 +31,59 @@ class DataService {
 
   static async getUsers() {
     try {
-      const usersJson = await AsyncStorage.getItem('users');
-      return usersJson ? JSON.parse(usersJson) : [];
+      const users = await AsyncStorage.getItem('users');
+      return users ? JSON.parse(users) : [];
     } catch (error) {
       console.error('Error getting users:', error);
       return [];
+    }
+  }
+
+  static async getCurrentUser() {
+    try {
+      const currentUser = await AsyncStorage.getItem('currentUser');
+      return currentUser ? JSON.parse(currentUser) : null;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
+  }
+
+  static async setCurrentUser(user) {
+    try {
+      await AsyncStorage.setItem('currentUser', JSON.stringify(user));
+    } catch (error) {
+      console.error('Error setting current user:', error);
+      throw error;
+    }
+  }
+
+  static async updateUserPassword(userId, newPassword) {
+    try {
+      const users = await this.getUsers();
+      const userIndex = users.findIndex(u => u.id === userId);
+      
+      if (userIndex === -1) return null;
+      
+      users[userIndex].password = newPassword;
+      users[userIndex].hasChangedPassword = true;
+      
+      await AsyncStorage.setItem('users', JSON.stringify(users));
+      await this.setCurrentUser(users[userIndex]);
+      
+      return users[userIndex];
+    } catch (error) {
+      console.error('Error updating password:', error);
+      throw error;
+    }
+  }
+
+  static async logout() {
+    try {
+      await AsyncStorage.removeItem('currentUser');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      throw error;
     }
   }
 
