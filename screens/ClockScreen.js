@@ -4,6 +4,7 @@ import { FAB, Snackbar, Button, Portal, Dialog, Menu } from 'react-native-paper'
 import Svg, { Circle } from 'react-native-svg';
 import DataService from '../services/DataService';
 import { useUser } from '../contexts/UserContext';
+import { useTheme } from '../contexts/ThemeContext';
 import SquarePattern from '../components/SquarePattern';
 import SvgText from '../components/SvgText';
 import ChangePasswordDialog from '../components/ChangePasswordDialog';
@@ -18,6 +19,7 @@ const ClockScreen = ({ navigation }) => {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const { currentUser, setCurrentUser } = useUser();
+  const { theme, isDarkTheme, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (currentUser) {
@@ -113,7 +115,7 @@ const ClockScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <SquarePattern />
       <View style={styles.header}>
         <Menu
@@ -121,29 +123,48 @@ const ClockScreen = ({ navigation }) => {
           onDismiss={handleMenuClose}
           anchor={
             <TouchableOpacity 
-              style={styles.userButton}
+              style={[styles.userButton, { 
+                backgroundColor: theme.secondary,
+                borderColor: theme.border 
+              }]}
               onPress={handleMenuOpen}
               activeOpacity={0.7}
             >
-              <Text style={styles.userIcon}>👤</Text>
-              <Text style={styles.username} numberOfLines={1}>{currentUser?.username}</Text>
+              <Text style={[styles.userIcon, { color: theme.text }]}>👤</Text>
+              <Text style={[styles.username, { color: theme.text }]} numberOfLines={1}>
+                {currentUser?.username}
+              </Text>
             </TouchableOpacity>
           }
-          contentStyle={styles.menuContent}
+          contentStyle={[styles.menuContent, { 
+            backgroundColor: theme.secondary,
+            borderColor: theme.border 
+          }]}
         >
           <Menu.Item 
             onPress={handleChangePassword} 
             title="Change Password"
-            titleStyle={styles.menuItemText}
-            style={styles.menuItem}
+            titleStyle={[styles.menuItemText, { color: theme.text }]}
+            style={[styles.menuItem, { backgroundColor: theme.secondary }]}
           />
           <Menu.Item 
             onPress={handleSwitchAccount} 
             title="Switch Account"
-            titleStyle={styles.menuItemText}
-            style={styles.menuItem}
+            titleStyle={[styles.menuItemText, { color: theme.text }]}
+            style={[styles.menuItem, { backgroundColor: theme.secondary }]}
           />
         </Menu>
+        <TouchableOpacity 
+          style={[styles.themeButton, { 
+            backgroundColor: theme.secondary,
+            borderColor: theme.border 
+          }]}
+          onPress={toggleTheme}
+        >
+          <Text style={[styles.themeIcon, { color: theme.text }]}>
+            {isDarkTheme ? '☀️' : '🌙'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.clockContainer}>
@@ -154,8 +175,8 @@ const ClockScreen = ({ navigation }) => {
                 cx="100"
                 cy="100"
                 r="90"
-                fill={isClockedIn ? '#b50448' : '#210554'}
-                stroke="#b50448"
+                fill={isClockedIn ? theme.primary : theme.secondary}
+                stroke={theme.border}
                 strokeWidth="4"
               />
             </Svg>
@@ -165,15 +186,18 @@ const ClockScreen = ({ navigation }) => {
                 fontSize={28}
                 strokeWidth={2}
                 strokeColor="#000000"
-                fillColor="#ffffff"
+                fillColor={theme.text}
                 style={styles.clockText}
               />
             </View>
           </View>
         </TouchableOpacity>
         {lastClockIn && (
-          <View style={styles.lastClockContainer}>
-            <Text style={styles.lastClockTime}>
+          <View style={[styles.lastClockContainer, { 
+            backgroundColor: theme.secondary,
+            borderColor: theme.border 
+          }]}>
+            <Text style={[styles.lastClockTime, { color: theme.text }]}>
               Last clock in: {formatTime(lastClockIn)}
             </Text>
           </View>
@@ -181,10 +205,13 @@ const ClockScreen = ({ navigation }) => {
       </View>
 
       <FAB
-        style={styles.analyticsFab}
+        style={[styles.analyticsFab, { 
+          backgroundColor: theme.secondary,
+          borderColor: theme.border 
+        }]}
         label="📊Analytics"
         onPress={() => navigation.navigate('Analytics')}
-        color="#ffffff"
+        color={theme.text}
       />
 
       <ChangePasswordDialog
@@ -213,7 +240,6 @@ const ClockScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#22272e',
     paddingTop: 40,
   },
   header: {
@@ -221,11 +247,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 16,
     paddingBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    position: 'relative',
   },
   userButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#210554',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -237,9 +265,27 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    maxWidth: '80%',
+    minWidth: 120,
+    maxWidth: '90%',
     borderWidth: 2,
-    borderColor: '#b50448',
+  },
+  themeButton: {
+    position: 'absolute',
+    right: 20,
+    padding: 8,
+    borderRadius: 20,
+    borderWidth: 2,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  themeIcon: {
+    fontSize: 20,
   },
   userIcon: {
     fontSize: 16,
@@ -251,6 +297,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#ffffff',
     flex: 1,
+    textAlign: 'center',
   },
   clockContainer: {
     flex: 1,

@@ -142,7 +142,9 @@ const LoginScreen = ({ navigation }) => {
             <SvgText 
               text="Login"
               fontSize={33}
-              outerStrokeWidth={4.5}
+              strokeWidth={0}
+              strokeColor="#000000"
+              outerStrokeWidth={0}
               outerStrokeColor="#ffffff"
               fillColor="#210554"
               style={styles.buttonText}

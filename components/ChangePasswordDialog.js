@@ -92,9 +92,9 @@ const ChangePasswordDialog = ({ visible, onDismiss, onConfirm }) => {
             <SvgText 
               text={error}
               fontSize={16}
-              strokeWidth={1}
+              strokeWidth={0}
               strokeColor="#000000"
-              outerStrokeWidth={0.5}
+              outerStrokeWidth={0}
               outerStrokeColor="#ffffff"
               fillColor="#b50448"
               style={styles.errorText}
@@ -104,8 +104,28 @@ const ChangePasswordDialog = ({ visible, onDismiss, onConfirm }) => {
         <Dialog.Actions style={styles.actions}>
           <Button 
             mode="contained" 
+            onPress={onDismiss}
+            style={[styles.button, styles.cancelButton]}
+            theme={{
+              colors: {
+                primary: '#210554',
+              },
+            }}
+          >
+            <SvgText 
+              text="Cancel"
+              fontSize={20}
+              strokeWidth={0}
+              strokeColor="#000000"
+              outerStrokeWidth={0}
+              outerStrokeColor="#ffffff"
+              fillColor="#b50448"
+            />
+          </Button>
+          <Button 
+            mode="contained" 
             onPress={handleConfirm}
-            style={styles.button}
+            style={[styles.button, styles.confirmButton]}
             theme={{
               colors: {
                 primary: '#b50448',
@@ -115,9 +135,9 @@ const ChangePasswordDialog = ({ visible, onDismiss, onConfirm }) => {
             <SvgText 
               text="Confirm"
               fontSize={20}
-              strokeWidth={1.5}
+              strokeWidth={0}
               strokeColor="#000000"
-              outerStrokeWidth={1}
+              outerStrokeWidth={0}
               outerStrokeColor="#ffffff"
               fillColor="#210554"
             />
@@ -157,12 +177,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   actions: {
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     padding: 20,
   },
   button: {
+    flex: 1,
+    marginHorizontal: 10,
     borderWidth: 2,
     borderColor: '#b50448',
+  },
+  cancelButton: {
+    marginRight: 5,
+  },
+  confirmButton: {
+    marginLeft: 5,
   },
 });
 

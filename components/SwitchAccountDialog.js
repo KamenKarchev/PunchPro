@@ -22,9 +22,9 @@ const SwitchAccountDialog = ({ visible, onDismiss, onConfirm }) => {
           <SvgText 
             text="Are you sure you want to switch accounts?"
             fontSize={18}
-            strokeWidth={1.5}
+            strokeWidth={0}
             strokeColor="#000000"
-            outerStrokeWidth={1}
+            outerStrokeWidth={0}
             outerStrokeColor="#ffffff"
             fillColor="#b50448"
             style={styles.message}
@@ -44,9 +44,9 @@ const SwitchAccountDialog = ({ visible, onDismiss, onConfirm }) => {
             <SvgText 
               text="Cancel"
               fontSize={20}
-              strokeWidth={1.5}
+              strokeWidth={0}
               strokeColor="#000000"
-              outerStrokeWidth={1}
+              outerStrokeWidth={0}
               outerStrokeColor="#ffffff"
               fillColor="#b50448"
             />
@@ -64,9 +64,9 @@ const SwitchAccountDialog = ({ visible, onDismiss, onConfirm }) => {
             <SvgText 
               text="Switch"
               fontSize={20}
-              strokeWidth={1.5}
+              strokeWidth={0}
               strokeColor="#000000"
-              outerStrokeWidth={1}
+              outerStrokeWidth={0}
               outerStrokeColor="#ffffff"
               fillColor="#210554"
             />
